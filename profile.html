@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Profile — Veritas</title>
+  <link rel="stylesheet" href="styles.css"/>
+  <style>
+    .profile-layout {
+      max-width: var(--max-w); margin: 0 auto;
+      padding: 56px 40px 100px;
+    }
+    .profile-hero {
+      display: flex; align-items: center; gap: 28px;
+      padding-bottom: 36px; border-bottom: 1px solid var(--gray-light); margin-bottom: 48px;
+    }
+    .profile-avatar-lg {
+      width: 80px; height: 80px; border-radius: 50%; background: var(--ink);
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--serif); font-size: 2rem; font-weight: 900;
+      color: var(--paper); flex-shrink: 0;
+    }
+    .profile-name { font-family: var(--serif); font-size: 2rem; font-weight: 900; margin-bottom: 4px; }
+    .profile-handle { font-family: var(--mono); font-size: 0.75rem; color: var(--gray); letter-spacing: 0.1em; }
+    .profile-role-badge {
+      font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.1em;
+      text-transform: uppercase; padding: 3px 10px; border: 1px solid var(--ink);
+      margin-left: 12px;
+    }
+    .profile-stats {
+      display: flex; gap: 36px; flex-wrap: wrap;
+      padding: 20px 0; margin-bottom: 0;
+    }
+    .pstat { text-align: center; }
+    .pstat-num { font-family: var(--serif); font-size: 2rem; font-weight: 900; line-height: 1; }
+    .pstat-label { font-family: var(--mono); font-size: 0.58rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gray); margin-top: 4px; }
+
+    .profile-grid {
+      display: grid; grid-template-columns: 1fr 320px; gap: 56px;
+    }
+
+    .submission-item {
+      padding: 20px 0; border-bottom: 1px solid var(--gray-faint); cursor: pointer;
+    }
+    .submission-item:hover .si-title { color: var(--red); }
+    .si-meta { font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gray); margin-bottom: 6px; display: flex; gap: 14px; flex-wrap: wrap; }
+    .si-title { font-family: var(--serif); font-size: 1.1rem; font-weight: 700; transition: color var(--transition); margin-bottom: 6px; }
+    .si-stats { font-family: var(--mono); font-size: 0.62rem; color: var(--gray); display: flex; gap: 14px; flex-wrap: wrap; }
+
+    .settings-form { max-width: 480px; }
+    .settings-section { margin-bottom: 36px; }
+    .settings-section h3 {
+      font-family: var(--mono); font-size: 0.65rem; letter-spacing: 0.16em;
+      text-transform: uppercase; color: var(--gray);
+      padding-bottom: 10px; border-bottom: 1.5px solid var(--gray-light); margin-bottom: 20px;
+    }
+
+    .empty-submissions {
+      padding: 48px 0; font-family: var(--mono); font-size: 0.78rem;
+      color: var(--gray); letter-spacing: 0.1em; text-transform: uppercase;
+    }
+
+    .not-logged-in {
+      text-align: center; padding: 80px 40px;
+    }
+    .not-logged-in h2 { font-family: var(--serif); font-size: 2rem; font-weight: 900; margin-bottom: 12px; }
+    .not-logged-in p { font-size: 1rem; color: var(--gray); margin-bottom: 24px; }
+    .not-logged-in .btn-row { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+
+    @media (max-width: 900px) {
+      .profile-layout { padding: 40px 24px 80px; }
+      .profile-grid { grid-template-columns: 1fr; gap: 40px; }
+      .profile-hero { flex-direction: column; align-items: flex-start; gap: 16px; }
+    }
+  </style>
+</head>
+<body>
+<div id="header-mount"></div>
+<div id="auth-modal-mount"></div>
+<div id="page-content"></div>
+<div id="footer-mount"></div>
+
+<script src="app.js"></script>
+<script>
+  function init() {
+    document.getElementById('header-mount').innerHTML = renderHeader('profile.html');
+    document.getElementById('auth-modal-mount').innerHTML = renderAuthModal();
+    document.getElementById('footer-mount').innerHTML = renderFooter();
+    initMobileNav();
+
+    const user = Auth.current();
+    if (!user) {
+      document.getElementById('page-content').innerHTML = `
+        <div class="not-logged-in">
+          <h2>Your Veritas profile</h2>
+          <p>Sign in or create an account to track your submissions, verification activity, and reputation.</p>
+          <div class="btn-row">
+            <button class="btn" onclick="openAuthModal('login')">Sign In</button>
+            <button class="btn btn-solid" onclick="openAuthModal('register')">Create Account</button>
+          </div>
+        </div>
+      `;
+      return;
+    }
+    renderProfile(user);
+  }
+
+  function renderProfile(user) {
+    const mySubmissions = Articles.all().filter(a => a.authorId === user.id);
+    const totalVotes = mySubmissions.reduce((s,a) => s + a.upvotes, 0);
+    const totalViews = mySubmissions.reduce((s,a) => s + (a.views||0), 0);
+    const verifyVotes = Object.keys(Store.get('verifies',{})).filter(k => k.startsWith(user.id+'_verify_')).length;
+
+    document.getElementById('page-content').innerHTML = `
+      <div class="profile-layout">
+        <div class="profile-hero">
+          <div class="profile-avatar-lg">${user.avatar}</div>
+          <div style="flex:1;">
+            <div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:4px;">
+              <div class="profile-name">${user.name}</div>
+              <span class="profile-role-badge">${user.role}</span>
+              ${user.verified ? '<span class="trust-pill trust-verified" style="margin-left:4px;">✓ Verified</span>' : ''}
+            </div>
+            <div class="profile-handle">@${user.handle} · Member since ${formatDate(user.joined)}</div>
+            ${user.bio ? `<p style="margin-top:8px;font-size:0.95rem;color:var(--gray);">${user.bio}</p>` : ''}
+          </div>
+          <button class="btn btn-sm" onclick="switchProfileTab('settings', this)">Edit Profile</button>
+        </div>
+
+        <div class="profile-stats">
+          <div class="pstat"><div class="pstat-num">${mySubmissions.length}</div><div class="pstat-label">Submissions</div></div>
+          <div class="pstat"><div class="pstat-num">${formatNum(totalVotes)}</div><div class="pstat-label">Votes Received</div></div>
+          <div class="pstat"><div class="pstat-num">${formatNum(totalViews)}</div><div class="pstat-label">Story Reads</div></div>
+          <div class="pstat"><div class="pstat-num">${verifyVotes}</div><div class="pstat-label">Stories Verified</div></div>
+          <div class="pstat"><div class="pstat-num">${user.reputation || 0}</div><div class="pstat-label">Reputation</div></div>
+        </div>
+
+        <div class="tabs" style="margin-top:36px;margin-bottom:0;">
+          <button class="tab-btn active" id="tabSubmissions" onclick="switchProfileTab('submissions',this)">My Submissions</button>
+          <button class="tab-btn" id="tabSettings" onclick="switchProfileTab('settings',this)">Settings</button>
+        </div>
+
+        <div class="profile-grid" style="margin-top:36px;">
+          <div>
+            <div id="profileTabContent">
+              ${renderSubmissions(mySubmissions)}
+            </div>
+          </div>
+          <aside>
+            <div style="border:1px solid var(--gray-light);padding:24px;margin-bottom:24px;">
+              <div style="font-family:var(--mono);font-size:0.62rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--gray);padding-bottom:10px;border-bottom:2px solid var(--ink);margin-bottom:16px;">Account Status</div>
+              <div style="display:flex;flex-direction:column;gap:12px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                  <span style="font-size:0.9rem;">Role</span>
+                  <span style="font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.08em;">${user.role}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                  <span style="font-size:0.9rem;">Verified</span>
+                  <span style="font-family:var(--mono);font-size:0.7rem;">${user.verified ? '✓ Yes' : '✗ No'}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                  <span style="font-size:0.9rem;">Reputation</span>
+                  <span style="font-family:var(--mono);font-size:0.7rem;color:var(--gold);">${user.reputation || 0}</span>
+                </div>
+              </div>
+            </div>
+            <div style="border:1px solid var(--gray-light);padding:24px;margin-bottom:24px;">
+              <div style="font-family:var(--mono);font-size:0.62rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--gray);padding-bottom:10px;border-bottom:2px solid var(--ink);margin-bottom:16px;">Quick Actions</div>
+              <div style="display:flex;flex-direction:column;gap:10px;">
+                <a href="submit.html" class="btn btn-solid btn-sm" style="justify-content:center;">+ Submit Evidence</a>
+                <a href="verify.html" class="btn btn-sm" style="justify-content:center;">Help Verify Stories</a>
+              </div>
+            </div>
+            ${!user.verified ? `
+              <div style="background:var(--ink);color:var(--paper);padding:24px;">
+                <div style="font-family:var(--mono);font-size:0.62rem;letter-spacing:0.14em;text-transform:uppercase;color:rgba(255,255,255,0.45);margin-bottom:12px;">Become Verified</div>
+                <p style="font-size:0.85rem;opacity:0.75;line-height:1.55;margin-bottom:16px;">Apply for verified journalist or contributor status. Increases your trust score and unlocks editorial tools.</p>
+                <button class="btn btn-sm" style="border-color:rgba(255,255,255,0.3);color:var(--paper);width:100%;justify-content:center;" onclick="showToast('Verification request sent. Our team will review your application.','success')">Apply for Verification</button>
+              </div>
+            ` : ''}
+          </aside>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderSubmissions(submissions) {
+    if (!submissions.length) return `
+      <div class="empty-submissions">You haven't submitted any stories yet.</div>
+      <a href="submit.html" class="btn btn-solid" style="margin-top:16px;">Submit Your First Story</a>
+    `;
+    return submissions.map(a => `
+      <div class="submission-item" onclick="window.location='article.html?id=${a.id}'">
+        <div class="si-meta">
+          <span style="color:var(--red);">${a.category}</span>
+          <span>${formatDate(a.date)}</span>
+          ${trustBadge(a.status)}
+        </div>
+        <div class="si-title">${a.title}</div>
+        <div class="si-stats">
+          <span>▲ ${formatNum(a.upvotes)} votes</span>
+          <span>👁 ${formatNum(a.views||0)} reads</span>
+          <span>💬 ${a.comments} comments</span>
+          <span>✓ ${a.verifiedBy||0} verified</span>
+          ${a.evidenceCount ? `<span>📎 ${a.evidenceCount} files</span>` : ''}
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function switchProfileTab(tab, btn) {
+    const user = Auth.current();
+    if (!user) return;
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+
+    const contentEl = document.getElementById('profileTabContent');
+    if (tab === 'submissions') {
+      document.getElementById('tabSubmissions').classList.add('active');
+      const mySubmissions = Articles.all().filter(a => a.authorId === user.id);
+      contentEl.innerHTML = renderSubmissions(mySubmissions);
+    } else if (tab === 'settings') {
+      document.getElementById('tabSettings').classList.add('active');
+      contentEl.innerHTML = renderSettings(user);
+    }
+  }
+
+  function renderSettings(user) {
+    return `
+      <div class="settings-form">
+        <div class="settings-section">
+          <h3>Profile Information</h3>
+          <div class="form-group">
+            <label class="form-label">Display Name</label>
+            <input class="form-input" type="text" id="settName" value="${user.name}" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Bio</label>
+            <textarea class="form-textarea" id="settBio" style="min-height:80px;">${user.bio || ''}</textarea>
+          </div>
+          <button class="btn btn-solid btn-sm" onclick="saveSettings()">Save Changes</button>
+        </div>
+        <div class="settings-section">
+          <h3>Account</h3>
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--gray-faint);">
+              <span style="font-size:0.9rem;">Email</span>
+              <span style="font-family:var(--mono);font-size:0.72rem;color:var(--gray);">${user.email || 'Not set'}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--gray-faint);">
+              <span style="font-size:0.9rem;">Member Since</span>
+              <span style="font-family:var(--mono);font-size:0.72rem;color:var(--gray);">${formatDate(user.joined)}</span>
+            </div>
+          </div>
+        </div>
+        <div class="settings-section">
+          <h3>Danger Zone</h3>
+          <button class="btn btn-sm" style="border-color:var(--red);color:var(--red);" onclick="confirmSignOut()">Sign Out</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function saveSettings() {
+    const user = Auth.current();
+    if (!user) return;
+    const name = document.getElementById('settName').value.trim();
+    const bio = document.getElementById('settBio').value.trim();
+    if (!name) { showToast('Name cannot be empty.', 'warning'); return; }
+    const updated = { ...user, name, bio, avatar: name.slice(0,2).toUpperCase() };
+    Auth.login(updated);
+    const users = Store.get('users', []);
+    const i = users.findIndex(u => u.id === user.id);
+    if (i > -1) { users[i] = { ...users[i], name, bio, avatar: updated.avatar }; Store.set('users', users); }
+    showToast('Profile updated.', 'success');
+    setTimeout(() => window.location.reload(), 600);
+  }
+
+  function confirmSignOut() {
+    if (confirm('Are you sure you want to sign out?')) handleLogout();
+  }
+
+  init();
+</script>
+</body>
+</html>

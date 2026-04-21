@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Verify Stories — Veritas</title>
+  <link rel="stylesheet" href="styles.css"/>
+  <style>
+    .verify-layout {
+      max-width: var(--max-w); margin: 0 auto; padding: 0 40px;
+      display: grid; grid-template-columns: 1fr 300px; gap: 56px;
+      padding-top: 56px; padding-bottom: 80px;
+    }
+    .verify-header {
+      padding: 40px 0 40px; border-bottom: 1px solid var(--gray-light); margin-bottom: 48px;
+    }
+    .verify-header .eyebrow {
+      font-family: var(--mono); font-size: 0.65rem; letter-spacing: 0.2em;
+      text-transform: uppercase; color: var(--red); margin-bottom: 12px;
+    }
+    .verify-header h1 {
+      font-family: var(--serif); font-size: clamp(1.8rem, 4vw, 2.8rem);
+      font-weight: 900; line-height: 1.08; margin-bottom: 14px;
+    }
+    .verify-header p { font-size: 1rem; color: var(--gray); line-height: 1.65; max-width: 540px; }
+
+    .verify-tabs {
+      display: flex; gap: 0; border-bottom: 1.5px solid var(--gray-light);
+      margin-bottom: 36px;
+    }
+
+    .vcard {
+      border: 1px solid var(--gray-light); padding: 28px;
+      margin-bottom: 20px; transition: border-color var(--transition);
+      animation: fadeUp 0.25s ease;
+    }
+    .vcard:hover { border-color: var(--gray); }
+    .vcard-meta {
+      font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--gray); margin-bottom: 10px;
+      display: flex; gap: 16px; flex-wrap: wrap; align-items: center;
+    }
+    .vcard-title {
+      font-family: var(--serif); font-size: 1.3rem; font-weight: 700;
+      line-height: 1.2; margin-bottom: 10px; cursor: pointer;
+      transition: color var(--transition);
+    }
+    .vcard-title:hover { color: var(--red); }
+    .vcard-excerpt { font-size: 0.95rem; color: var(--gray); line-height: 1.55; margin-bottom: 16px; }
+    .vcard-evidence {
+      display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px;
+    }
+    .ev-badge {
+      font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.08em;
+      text-transform: uppercase; padding: 3px 8px;
+      background: var(--gray-faint); color: var(--gray);
+    }
+    .vcard-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .vcard-score {
+      flex: 1; min-width: 180px;
+    }
+    .vcard-score-label {
+      font-family: var(--mono); font-size: 0.58rem; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--gray); margin-bottom: 4px;
+    }
+
+    /* HOW IT WORKS */
+    .how-it-works { margin-bottom: 32px; }
+    .how-it-works h3 {
+      font-family: var(--mono); font-size: 0.62rem;
+      letter-spacing: 0.18em; text-transform: uppercase; color: var(--gray);
+      padding-bottom: 10px; border-bottom: 2px solid var(--ink); margin-bottom: 20px;
+    }
+    .how-step {
+      display: flex; gap: 14px; margin-bottom: 18px; align-items: flex-start;
+    }
+    .how-num {
+      width: 24px; height: 24px; border-radius: 50%; background: var(--ink);
+      color: var(--paper); font-family: var(--mono); font-size: 0.65rem;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .how-text { font-size: 0.9rem; color: var(--gray); line-height: 1.55; }
+    .how-text strong { color: var(--ink); font-weight: 600; }
+
+    .leaderboard-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 0; border-bottom: 1px solid var(--gray-faint);
+    }
+    .lb-rank { font-family: var(--mono); font-size: 0.7rem; color: var(--red); width: 20px; }
+    .lb-avatar {
+      width: 30px; height: 30px; border-radius: 50%; background: var(--ink);
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--serif); font-size: 0.7rem; color: var(--paper); flex-shrink: 0;
+    }
+    .lb-name { flex: 1; font-size: 0.9rem; }
+    .lb-score { font-family: var(--mono); font-size: 0.68rem; color: var(--gray); }
+
+    .empty-state {
+      text-align: center; padding: 60px 20px;
+      font-family: var(--mono); font-size: 0.78rem;
+      color: var(--gray); letter-spacing: 0.1em; text-transform: uppercase;
+    }
+
+    @media (max-width: 900px) {
+      .verify-layout { grid-template-columns: 1fr; gap: 40px; padding: 40px 24px 60px; }
+    }
+  </style>
+</head>
+<body>
+<div id="header-mount"></div>
+<div id="auth-modal-mount"></div>
+
+<div class="container">
+  <div class="verify-header">
+    <div class="eyebrow">Community Verification</div>
+    <h1>Truth is a collective<br>responsibility.</h1>
+    <p>Help verify or dispute submitted stories. Your votes contribute to the community trust score shown on every article. Every verified voice strengthens the record.</p>
+  </div>
+</div>
+
+<div class="verify-layout">
+  <main>
+    <div class="verify-tabs tabs" id="verifyTabs">
+      <button class="tab-btn active" onclick="filterQueue('all', this)">All Stories</button>
+      <button class="tab-btn" onclick="filterQueue('reviewing', this)">Needs Review</button>
+      <button class="tab-btn" onclick="filterQueue('verified', this)">Verified</button>
+      <button class="tab-btn" onclick="filterQueue('disputed', this)">Disputed</button>
+    </div>
+    <div id="verifyQueue"></div>
+  </main>
+
+  <aside>
+    <div class="how-it-works">
+      <h3>How Verification Works</h3>
+      <div class="how-step">
+        <div class="how-num">1</div>
+        <div class="how-text"><strong>Read the full story</strong> and examine the listed evidence files before voting.</div>
+      </div>
+      <div class="how-step">
+        <div class="how-num">2</div>
+        <div class="how-text"><strong>Vote to verify</strong> if the reporting appears factual, sourced, and credible.</div>
+      </div>
+      <div class="how-step">
+        <div class="how-num">3</div>
+        <div class="how-text"><strong>Dispute a story</strong> if you have specific reason to believe it is inaccurate or fabricated.</div>
+      </div>
+      <div class="how-step">
+        <div class="how-num">4</div>
+        <div class="how-text"><strong>Your votes</strong> contribute to the public Trust Score displayed on every article.</div>
+      </div>
+      <div class="how-step">
+        <div class="how-num">5</div>
+        <div class="how-text">Stories reaching <strong>70%+ verification</strong> are marked Verified. Below 40% triggers editorial re-review.</div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <h3 style="font-family:var(--mono);font-size:0.62rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--gray);padding-bottom:10px;border-bottom:2px solid var(--ink);margin-bottom:16px;">Top Verifiers</h3>
+      <div id="leaderboard"></div>
+    </div>
+
+    <div style="background:var(--ink);color:var(--paper);padding:24px;margin-top:24px;">
+      <div style="font-family:var(--mono);font-size:0.62rem;letter-spacing:0.14em;text-transform:uppercase;color:rgba(255,255,255,0.45);margin-bottom:12px;">Verification Stats</div>
+      <div id="verifyStats"></div>
+    </div>
+  </aside>
+</div>
+
+<div id="footer-mount"></div>
+
+<script src="app.js"></script>
+<script>
+  let currentFilter = 'all';
+
+  function init() {
+    document.getElementById('header-mount').innerHTML = renderHeader('verify.html');
+    document.getElementById('auth-modal-mount').innerHTML = renderAuthModal();
+    document.getElementById('footer-mount').innerHTML = renderFooter();
+    initMobileNav();
+    renderQueue();
+    renderLeaderboard();
+    renderVerifyStats();
+  }
+
+  function filterQueue(filter, btn) {
+    currentFilter = filter;
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderQueue();
+  }
+
+  function renderQueue() {
+    let articles = Articles.all();
+    if (currentFilter !== 'all') articles = articles.filter(a => a.status === currentFilter);
+    articles = [...articles].sort((a,b) => new Date(b.date) - new Date(a.date));
+
+    if (!articles.length) {
+      document.getElementById('verifyQueue').innerHTML = `<div class="empty-state">No stories in this category.</div>`;
+      return;
+    }
+
+    document.getElementById('verifyQueue').innerHTML = articles.map(a => verifyCard(a)).join('');
+  }
+
+  function verifyCard(a) {
+    const user = Auth.current();
+    const userVerify = user ? (Store.get('verifies') || {})[user.id + '_verify_' + a.id] : null;
+    const total = (a.verifiedBy || 0) + (a.disputedBy || 0);
+    const pct = total > 0 ? Math.round((a.verifiedBy / total) * 100) : 0;
+
+    return `
+      <div class="vcard" id="vcard_${a.id}">
+        <div class="vcard-meta">
+          <span style="color:var(--red);">${a.category}</span>
+          <span>${formatDate(a.date)}</span>
+          <span>By ${a.author}</span>
+          ${trustBadge(a.status)}
+        </div>
+        <div class="vcard-title" onclick="window.location='article.html?id=${a.id}'">${a.title}</div>
+        <p class="vcard-excerpt">${a.excerpt.slice(0,200)}…</p>
+        ${a.evidenceCount ? `<div class="vcard-evidence">
+          ${(a.evidenceTypes||[]).slice(0,5).map(t => `<span class="ev-badge">📎 ${t}</span>`).join('')}
+          ${a.evidenceCount > 5 ? `<span class="ev-badge">+${a.evidenceCount-5} more</span>` : ''}
+        </div>` : ''}
+        <div class="vcard-actions">
+          <button class="vote-btn ${userVerify === 'verified' ? 'voted-up' : ''}" onclick="doVerify('${a.id}','verified')">
+            ✓ Verify <span id="vc_${a.id}">${a.verifiedBy || 0}</span>
+          </button>
+          <button class="vote-btn ${userVerify === 'disputed' ? 'voted-down' : ''}" onclick="doVerify('${a.id}','disputed')">
+            ✗ Dispute <span id="vd_${a.id}">${a.disputedBy || 0}</span>
+          </button>
+          <a href="article.html?id=${a.id}" class="btn btn-sm">Read Full Story →</a>
+          <div class="vcard-score" style="min-width:0;">
+            ${total > 0 ? `
+              <div class="vcard-score-label">Trust: ${pct}% (${total} votes)</div>
+              <div class="trust-bar-wrap"><div class="trust-bar-fill" style="width:${pct}%;background:${pct>=70?'#3d9970':pct>=40?'var(--gold)':'var(--red)'}"></div></div>
+            ` : `<div class="vcard-score-label" style="color:var(--gray-light);">No votes yet — be first</div>`}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function doVerify(articleId, direction) {
+    if (!Auth.isLoggedIn()) { openAuthModal('login'); return; }
+    Voting.verify(articleId, direction);
+    const a = Articles.get(articleId);
+    const user = Auth.current();
+    const userVerify = (Store.get('verifies') || {})[user.id + '_verify_' + articleId];
+    // update counts in DOM
+    document.getElementById('vc_' + articleId).textContent = a.verifiedBy || 0;
+    document.getElementById('vd_' + articleId).textContent = a.disputedBy || 0;
+    // re-render the whole card to update button states
+    const cardEl = document.getElementById('vcard_' + articleId);
+    if (cardEl) cardEl.outerHTML = verifyCard(Articles.get(articleId));
+    showToast(direction === 'verified' ? 'Marked as verified.' : 'Story disputed.', direction === 'verified' ? 'success' : 'warning');
+    renderVerifyStats();
+  }
+
+  function renderLeaderboard() {
+    const users = Store.get('users', []).filter(u => u.reputation > 0 || u.submissions > 0)
+      .sort((a,b) => b.reputation - a.reputation).slice(0,6);
+    if (!users.length) {
+      document.getElementById('leaderboard').innerHTML = '<div style="font-size:0.85rem;color:var(--gray);">No verifiers yet. Be the first!</div>';
+      return;
+    }
+    document.getElementById('leaderboard').innerHTML = users.map((u,i) => `
+      <div class="leaderboard-item">
+        <div class="lb-rank">#${i+1}</div>
+        <div class="lb-avatar">${u.avatar}</div>
+        <div class="lb-name">${u.name}</div>
+        <div class="lb-score">${u.reputation} rep</div>
+      </div>
+    `).join('');
+  }
+
+  function renderVerifyStats() {
+    const articles = Articles.all();
+    const verified = articles.filter(a => a.status === 'verified').length;
+    const reviewing = articles.filter(a => a.status === 'reviewing').length;
+    const totalVotes = articles.reduce((s,a) => s + (a.verifiedBy||0) + (a.disputedBy||0), 0);
+    document.getElementById('verifyStats').innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div><div style="font-family:var(--serif);font-size:1.6rem;font-weight:900;">${verified}</div><div style="font-family:var(--mono);font-size:0.58rem;letter-spacing:0.1em;text-transform:uppercase;opacity:0.5;margin-top:2px;">Verified</div></div>
+        <div><div style="font-family:var(--serif);font-size:1.6rem;font-weight:900;color:var(--gold);">${reviewing}</div><div style="font-family:var(--mono);font-size:0.58rem;letter-spacing:0.1em;text-transform:uppercase;opacity:0.5;margin-top:2px;">In Review</div></div>
+        <div><div style="font-family:var(--serif);font-size:1.6rem;font-weight:900;">${formatNum(totalVotes)}</div><div style="font-family:var(--mono);font-size:0.58rem;letter-spacing:0.1em;text-transform:uppercase;opacity:0.5;margin-top:2px;">Total Votes</div></div>
+        <div><div style="font-family:var(--serif);font-size:1.6rem;font-weight:900;">${articles.length}</div><div style="font-family:var(--mono);font-size:0.58rem;letter-spacing:0.1em;text-transform:uppercase;opacity:0.5;margin-top:2px;">Stories</div></div>
+      </div>
+    `;
+  }
+
+  init();
+</script>
+</body>
+</html>

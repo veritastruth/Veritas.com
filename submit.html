@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Submit Evidence — Veritas</title>
+  <link rel="stylesheet" href="styles.css"/>
+  <style>
+    .submit-layout {
+      max-width: 820px; margin: 0 auto; padding: 56px 40px 100px;
+    }
+    .submit-intro {
+      padding: 40px 0 48px; border-bottom: 1px solid var(--gray-light); margin-bottom: 52px;
+    }
+    .submit-intro .eyebrow {
+      font-family: var(--mono); font-size: 0.65rem;
+      letter-spacing: 0.2em; text-transform: uppercase; color: var(--red); margin-bottom: 12px;
+    }
+    .submit-intro h1 {
+      font-family: var(--serif); font-size: clamp(2rem, 5vw, 3.2rem);
+      font-weight: 900; line-height: 1.06; letter-spacing: -0.02em; margin-bottom: 16px;
+    }
+    .submit-intro p { font-size: 1rem; color: var(--gray); line-height: 1.65; max-width: 560px; }
+
+    .security-strip {
+      background: var(--ink); color: var(--paper);
+      padding: 16px 24px; display: flex; gap: 24px;
+      flex-wrap: wrap; margin-bottom: 48px;
+    }
+    .security-item { display: flex; align-items: center; gap: 8px; }
+    .security-item span { font-family: var(--mono); font-size: 0.65rem; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.8; }
+    .security-icon { font-size: 0.9rem; }
+
+    .upload-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+    .progress-steps {
+      display: flex; gap: 0; margin-bottom: 48px;
+    }
+    .step {
+      flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px;
+      position: relative;
+    }
+    .step::after {
+      content: ''; position: absolute; top: 14px; left: 50%; right: -50%;
+      height: 1px; background: var(--gray-light); z-index: 0;
+    }
+    .step:last-child::after { display: none; }
+    .step-num {
+      width: 28px; height: 28px; border-radius: 50%;
+      border: 1.5px solid var(--gray-light); background: var(--paper);
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--mono); font-size: 0.65rem; z-index: 1;
+      transition: all 0.3s;
+    }
+    .step.active .step-num { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+    .step.done .step-num { background: #3d9970; color: white; border-color: #3d9970; }
+    .step-label { font-family: var(--mono); font-size: 0.58rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gray); text-align: center; }
+    .step.active .step-label { color: var(--ink); }
+
+    .form-section { display: none; }
+    .form-section.active { display: block; animation: fadeUp 0.3s ease; }
+
+    .nav-btns { display: flex; justify-content: space-between; align-items: center; margin-top: 36px; }
+
+    .success-state {
+      display: none; text-align: center; padding: 60px 40px;
+      animation: fadeUp 0.4s ease;
+    }
+    .success-state.show { display: block; }
+    .success-icon { font-size: 3rem; margin-bottom: 20px; }
+    .success-state h2 { font-family: var(--serif); font-size: 2rem; font-weight: 900; margin-bottom: 12px; }
+    .success-state p { font-size: 1rem; color: var(--gray); line-height: 1.65; max-width: 480px; margin: 0 auto 24px; }
+    .ref-code {
+      font-family: var(--mono); font-size: 1rem; letter-spacing: 0.18em;
+      background: var(--ink); color: var(--paper); padding: 12px 24px;
+      display: inline-block; margin-bottom: 28px;
+    }
+
+    @media (max-width: 600px) {
+      .submit-layout { padding: 40px 24px 80px; }
+      .upload-grid { grid-template-columns: 1fr; }
+      .security-strip { padding: 14px 16px; gap: 16px; }
+      .progress-steps { gap: 4px; }
+      .step-label { display: none; }
+    }
+  </style>
+</head>
+<body>
+<div id="header-mount"></div>
+<div id="auth-modal-mount"></div>
+
+<div class="submit-layout">
+  <div class="submit-intro">
+    <div class="eyebrow">Secure Submission Portal</div>
+    <h1>Speak. We will<br>protect your voice.</h1>
+    <p>Every submission is reviewed by our editorial team. Your documents are handled with strict chain-of-custody protocols. Anonymous submissions are fully supported.</p>
+  </div>
+
+  <div class="security-strip">
+    <div class="security-item"><span class="security-icon">🔒</span><span>End-to-End Encrypted</span></div>
+    <div class="security-item"><span class="security-icon">👤</span><span>Anonymous Option</span></div>
+    <div class="security-item"><span class="security-icon">🗑</span><span>Metadata Stripped</span></div>
+    <div class="security-item"><span class="security-icon">⚖️</span><span>Legal Protection</span></div>
+    <div class="security-item"><span class="security-icon">📋</span><span>Editorial Review</span></div>
+  </div>
+
+  <div class="progress-steps" id="progressSteps">
+    <div class="step active" id="step1"><div class="step-num">1</div><div class="step-label">Story</div></div>
+    <div class="step" id="step2"><div class="step-num">2</div><div class="step-label">Evidence</div></div>
+    <div class="step" id="step3"><div class="step-num">3</div><div class="step-label">Identity</div></div>
+    <div class="step" id="step4"><div class="step-num">4</div><div class="step-label">Review</div></div>
+  </div>
+
+  <!-- STEP 1: Story -->
+  <div class="form-section active" id="section1">
+    <div class="form-group">
+      <label class="form-label">Headline <span class="req">*</span></label>
+      <input class="form-input" type="text" id="headline" placeholder="State the core claim in one sentence" />
+      <span class="form-hint">Be specific and factual. This becomes the article title.</span>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Category <span class="req">*</span></label>
+      <select class="form-select" id="category">
+        <option value="" disabled selected>Select the most relevant category</option>
+        <option>Government & Politics</option>
+        <option>Corporate Misconduct</option>
+        <option>Law Enforcement</option>
+        <option>Environmental</option>
+        <option>Health & Pharmaceuticals</option>
+        <option>Financial Fraud</option>
+        <option>Military & Intelligence</option>
+        <option>Human Rights</option>
+        <option>Technology & Surveillance</option>
+        <option>Other</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Full Account <span class="req">*</span></label>
+      <textarea class="form-textarea" id="account" style="min-height:200px;" placeholder="Provide a detailed, factual account. Include dates, locations, names, and the sequence of events. Write as if you are testifying — specificity matters."></textarea>
+      <span class="form-hint" id="wordCount" style="font-family:var(--mono);font-size:0.6rem;">0 words</span>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Tags <span class="opt">— comma-separated</span></label>
+      <input class="form-input" type="text" id="tags" placeholder="e.g. government, healthcare, fraud" />
+    </div>
+    <div class="nav-btns">
+      <span></span>
+      <button class="btn btn-solid" onclick="nextStep(1)">Continue to Evidence →</button>
+    </div>
+  </div>
+
+  <!-- STEP 2: Evidence -->
+  <div class="form-section" id="section2">
+    <div class="form-group">
+      <label class="form-label">Documents <span class="opt">— PDF, DOC, TXT, XLS, CSV</span></label>
+      <div class="drop-zone" id="docZone">
+        <input type="file" id="docInput" multiple accept=".pdf,.doc,.docx,.txt,.xls,.xlsx,.csv" />
+        <div class="drop-zone-icon">📄</div>
+        <div class="drop-zone-label">Drop documents here</div>
+        <div class="drop-zone-hint">or click to browse · Max 50MB per file</div>
+      </div>
+      <div class="file-list" id="docList"></div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Photos & Images <span class="opt">— JPG, PNG, GIF, WEBP</span></label>
+      <div class="drop-zone" id="photoZone">
+        <input type="file" id="photoInput" multiple accept=".jpg,.jpeg,.png,.gif,.webp" />
+        <div class="drop-zone-icon">📷</div>
+        <div class="drop-zone-label">Drop photos here</div>
+        <div class="drop-zone-hint">or click to browse · Metadata will be stripped</div>
+      </div>
+      <div class="file-list" id="photoList"></div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Video & Audio <span class="opt">— MP4, MOV, MP3, WAV</span></label>
+      <div class="drop-zone" id="videoZone">
+        <input type="file" id="videoInput" multiple accept=".mp4,.mov,.avi,.mp3,.wav,.m4a" />
+        <div class="drop-zone-icon">🎥</div>
+        <div class="drop-zone-label">Drop media here</div>
+        <div class="drop-zone-hint">or click to browse</div>
+      </div>
+      <div class="file-list" id="videoList"></div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Chain of Custody <span class="opt">— how did you obtain this evidence?</span></label>
+      <textarea class="form-textarea" id="custody" style="min-height:90px;" placeholder="Describe how you obtained these documents or recordings. What is your relationship to the subject or organization? This information strengthens credibility."></textarea>
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn" onclick="prevStep(2)">← Back</button>
+      <button class="btn btn-solid" onclick="nextStep(2)">Continue to Identity →</button>
+    </div>
+  </div>
+
+  <!-- STEP 3: Identity -->
+  <div class="form-section" id="section3">
+    <div class="toggle-row" id="anonToggle" onclick="toggleAnon()">
+      <div class="toggle-switch"></div>
+      <div>
+        <div class="toggle-text-label">Submit Anonymously</div>
+        <div class="toggle-text-sub">Your name, email, and any identifying information will not be stored or linked to this submission. Recommended for sensitive disclosures.</div>
+      </div>
+    </div>
+
+    <div id="identityFields" style="margin-top:28px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+        <div class="form-group">
+          <label class="form-label">Your Name <span class="opt">— optional</span></label>
+          <input class="form-input" type="text" id="subName" placeholder="Full name" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Contact Email <span class="opt">— optional</span></label>
+          <input class="form-input" type="email" id="subEmail" placeholder="For editorial follow-up only" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Your Role / Affiliation <span class="opt">— optional but helpful</span></label>
+        <input class="form-input" type="text" id="subRole" placeholder="e.g. Former employee, Eyewitness, Journalist, Researcher" />
+      </div>
+    </div>
+
+    <div style="background:var(--gray-faint);padding:20px;margin-top:8px;">
+      <p style="font-size:0.88rem;color:var(--gray);line-height:1.65;">
+        <strong style="font-family:var(--mono);font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink);">Privacy Notice:</strong><br>
+        If you choose to provide contact information, it will only be used by our editorial team to verify your submission or follow up on clarifications. It will never be published, sold, or shared with any third party without your explicit consent. For maximum protection, consider using an anonymous email service.
+      </p>
+    </div>
+
+    <div class="nav-btns" style="margin-top:36px;">
+      <button class="btn" onclick="prevStep(3)">← Back</button>
+      <button class="btn btn-solid" onclick="nextStep(3)">Review Submission →</button>
+    </div>
+  </div>
+
+  <!-- STEP 4: Review -->
+  <div class="form-section" id="section4">
+    <div style="background:var(--paper-dark);border:1px solid var(--gray-light);padding:28px;margin-bottom:28px;">
+      <div style="font-family:var(--mono);font-size:0.62rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--gray);margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--gray-light);">Submission Review</div>
+      <div id="reviewContent"></div>
+    </div>
+
+    <div class="form-group">
+      <div style="display:flex;align-items:flex-start;gap:12px;padding:16px;border:1px solid var(--gray-light);">
+        <input type="checkbox" id="truthAttest" style="margin-top:4px;flex-shrink:0;width:16px;height:16px;accent-color:var(--ink);" />
+        <label for="truthAttest" style="font-size:0.88rem;color:var(--ink);line-height:1.55;cursor:pointer;">
+          I attest that to the best of my knowledge, the information and evidence I am submitting is authentic, factual, and not fabricated or altered. I understand that submitting false evidence violates Veritas editorial standards and may have legal consequences.
+        </label>
+      </div>
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn" onclick="prevStep(4)">← Back</button>
+      <button class="btn btn-red" onclick="submitStory()">Submit to Veritas →</button>
+    </div>
+  </div>
+
+  <!-- SUCCESS -->
+  <div class="success-state" id="successState">
+    <div class="success-icon">✓</div>
+    <h2>Your evidence is in safe hands.</h2>
+    <p>Our editorial team will review your submission within 48–72 hours. If contact information was provided, we may reach out for verification.</p>
+    <div class="ref-code" id="refCode"></div>
+    <p style="font-size:0.82rem;color:var(--gray);">Save this reference code to track your submission status. You can check back on the Veritas platform using this code.</p>
+    <div style="margin-top:32px;display:flex;gap:14px;justify-content:center;flex-wrap:wrap;">
+      <a href="index.html" class="btn">Back to Home</a>
+      <a href="verify.html" class="btn btn-solid">Help Verify Other Stories</a>
+    </div>
+  </div>
+</div>
+
+<div id="footer-mount"></div>
+
+<script src="app.js"></script>
+<script>
+  const docFiles = [], photoFiles = [], videoFiles = [];
+  let isAnon = false;
+  let currentStep = 1;
+
+  function init() {
+    document.getElementById('header-mount').innerHTML = renderHeader('submit.html');
+    document.getElementById('auth-modal-mount').innerHTML = renderAuthModal();
+    document.getElementById('footer-mount').innerHTML = renderFooter();
+    initMobileNav();
+    setupDropZone('docZone', 'docInput', docFiles, 'docList');
+    setupDropZone('photoZone', 'photoInput', photoFiles, 'photoList');
+    setupDropZone('videoZone', 'videoInput', videoFiles, 'videoList');
+
+    // Word counter
+    document.getElementById('account').addEventListener('input', function() {
+      const words = this.value.trim() ? this.value.trim().split(/\s+/).length : 0;
+      document.getElementById('wordCount').textContent = words + ' word' + (words === 1 ? '' : 's');
+    });
+  }
+
+  function setupDropZone(zoneId, inputId, filesArr, listId) {
+    const zone = document.getElementById(zoneId);
+    const input = document.getElementById(inputId);
+    const list = document.getElementById(listId);
+
+    input.addEventListener('change', () => {
+      Array.from(input.files).forEach(f => filesArr.push(f));
+      renderFileList(filesArr, list);
+      input.value = '';
+    });
+    zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+    zone.addEventListener('drop', e => {
+      e.preventDefault(); zone.classList.remove('dragover');
+      Array.from(e.dataTransfer.files).forEach(f => filesArr.push(f));
+      renderFileList(filesArr, list);
+    });
+  }
+
+  function formatSize(b) {
+    if (b < 1024) return b + ' B';
+    if (b < 1048576) return (b/1024).toFixed(1) + ' KB';
+    return (b/1048576).toFixed(1) + ' MB';
+  }
+
+  function renderFileList(files, listEl) {
+    listEl.innerHTML = '';
+    files.forEach((f, i) => {
+      const item = document.createElement('div');
+      item.className = 'file-item';
+      item.innerHTML = `<span class="fi-name">${f.name}</span><span class="fi-size">${formatSize(f.size)}</span><button class="fi-remove" title="Remove">×</button>`;
+      item.querySelector('.fi-remove').addEventListener('click', () => { files.splice(i, 1); renderFileList(files, listEl); });
+      listEl.appendChild(item);
+    });
+  }
+
+  function toggleAnon() {
+    isAnon = !isAnon;
+    document.getElementById('anonToggle').classList.toggle('active', isAnon);
+    document.getElementById('identityFields').style.display = isAnon ? 'none' : 'block';
+  }
+
+  function setStep(n) {
+    for (let i = 1; i <= 4; i++) {
+      document.getElementById('section' + i).classList.toggle('active', i === n);
+      const stepEl = document.getElementById('step' + i);
+      stepEl.classList.toggle('active', i === n);
+      stepEl.classList.toggle('done', i < n);
+    }
+    currentStep = n;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function nextStep(from) {
+    if (from === 1) {
+      if (!document.getElementById('headline').value.trim()) { showToast('Please enter a headline.', 'warning'); return; }
+      if (!document.getElementById('category').value) { showToast('Please select a category.', 'warning'); return; }
+      if (document.getElementById('account').value.trim().split(/\s+/).length < 20) { showToast('Please provide a more detailed account (at least 20 words).', 'warning'); return; }
+    }
+    if (from === 4) { submitStory(); return; }
+    if (from === 3) { buildReview(); }
+    setStep(from + 1);
+  }
+
+  function prevStep(from) { setStep(from - 1); }
+
+  function buildReview() {
+    const h = document.getElementById('headline').value.trim();
+    const cat = document.getElementById('category').value;
+    const account = document.getElementById('account').value.trim();
+    const totalFiles = docFiles.length + photoFiles.length + videoFiles.length;
+    const name = isAnon ? 'Anonymous' : (document.getElementById('subName').value.trim() || 'Not provided');
+    document.getElementById('reviewContent').innerHTML = `
+      <div style="display:grid;gap:16px;">
+        <div><div style="font-family:var(--mono);font-size:0.62rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--gray);margin-bottom:4px;">Headline</div><div style="font-family:var(--serif);font-size:1.1rem;font-weight:700;">${h}</div></div>
+        <div><div style="font-family:var(--mono);font-size:0.62rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--gray);margin-bottom:4px;">Category</div><div>${cat}</div></div>
+        <div><div style="font-family:var(--mono);font-size:0.62rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--gray);margin-bottom:4px;">Account</div><div style="font-size:0.9rem;color:var(--gray);line-height:1.5;">${account.slice(0,300)}${account.length > 300 ? '…' : ''}</div></div>
+        <div><div style="font-family:var(--mono);font-size:0.62rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--gray);margin-bottom:4px;">Evidence Files</div><div>${totalFiles} file${totalFiles === 1 ? '' : 's'} attached</div></div>
+        <div><div style="font-family:var(--mono);font-size:0.62rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--gray);margin-bottom:4px;">Submitting As</div><div>${name}</div></div>
+      </div>
+    `;
+  }
+
+  function generateRef() {
+    const c = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    return 'VRT-' + Array.from({length:8}, () => c[Math.floor(Math.random()*c.length)]).join('');
+  }
+
+  function submitStory() {
+    if (!document.getElementById('truthAttest') || !document.getElementById('truthAttest').checked) {
+      showToast('Please confirm the attestation before submitting.', 'warning');
+      return;
+    }
+    const h = document.getElementById('headline').value.trim();
+    const cat = document.getElementById('category').value;
+    const account = document.getElementById('account').value.trim();
+    const tags = document.getElementById('tags').value.split(',').map(t => t.trim()).filter(Boolean);
+    const totalFiles = docFiles.length + photoFiles.length + videoFiles.length;
+    const authorName = isAnon ? 'Anonymous' : (document.getElementById('subName').value.trim() || 'Anonymous');
+
+    const user = Auth.current();
+    const newArticle = {
+      id: uid('art_'), title: h, category: cat,
+      author: authorName, authorId: user ? user.id : 'anon_' + uid(),
+      date: new Date().toISOString().slice(0,10), status: 'reviewing',
+      excerpt: account.slice(0,240) + (account.length > 240 ? '…' : ''),
+      content: account, upvotes: 0, downvotes: 0, comments: 0, views: 0,
+      evidenceCount: totalFiles,
+      evidenceTypes: [...docFiles.map(()=>'document'), ...photoFiles.map(()=>'photo'), ...videoFiles.map(()=>'video')],
+      verifiedBy: 0, disputedBy: 0, tags, featured: false
+    };
+    Articles.add(newArticle);
+
+    // Show success
+    for (let i = 1; i <= 4; i++) document.getElementById('section' + i).classList.remove('active');
+    document.getElementById('progressSteps').style.display = 'none';
+    document.getElementById('successState').classList.add('show');
+    document.getElementById('refCode').textContent = generateRef();
+    showToast('Submission received. Thank you.', 'success');
+  }
+
+  init();
+</script>
+</body>
+</html>

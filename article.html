@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Article — Veritas</title>
+  <link rel="stylesheet" href="styles.css"/>
+  <style>
+    .article-layout {
+      max-width: var(--max-w); margin: 0 auto; padding: 0 40px;
+      display: grid; grid-template-columns: 1fr 300px; gap: 60px;
+      padding-top: 56px; padding-bottom: 80px;
+    }
+
+    /* ARTICLE HEADER */
+    .article-kicker {
+      font-family: var(--mono); font-size: 0.65rem;
+      letter-spacing: 0.2em; text-transform: uppercase;
+      color: var(--red); margin-bottom: 14px;
+      display: flex; gap: 20px; align-items: center; flex-wrap: wrap;
+    }
+    .article-headline {
+      font-family: var(--serif); font-size: clamp(1.9rem, 5vw, 3rem);
+      font-weight: 900; line-height: 1.08; letter-spacing: -0.02em;
+      margin-bottom: 20px;
+    }
+    .article-dek {
+      font-size: 1.2rem; color: var(--gray); line-height: 1.6;
+      margin-bottom: 28px; font-style: italic;
+    }
+    .article-byline {
+      display: flex; align-items: center; gap: 16px;
+      padding: 18px 0; border-top: 1px solid var(--gray-light);
+      border-bottom: 1px solid var(--gray-light); margin-bottom: 36px;
+      flex-wrap: wrap; gap: 20px;
+    }
+    .byline-avatar {
+      width: 40px; height: 40px; border-radius: 50%;
+      background: var(--ink); display: flex; align-items: center; justify-content: center;
+      font-family: var(--serif); font-weight: 700; font-size: 0.9rem; color: var(--paper);
+      flex-shrink: 0;
+    }
+    .byline-info { flex: 1; }
+    .byline-name { font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.1em; font-weight: 500; text-transform: uppercase; }
+    .byline-meta { font-family: var(--mono); font-size: 0.62rem; color: var(--gray); letter-spacing: 0.08em; margin-top: 2px; }
+    .byline-right { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+
+    /* ARTICLE BODY */
+    .article-body {
+      font-size: 1.15rem; line-height: 1.75; color: var(--ink);
+    }
+    .article-body p { margin-bottom: 1.4em; }
+    .article-body blockquote {
+      border-left: 3px solid var(--red); padding-left: 20px;
+      margin: 28px 0; font-style: italic; color: var(--gray);
+      font-size: 1.1rem;
+    }
+
+    /* EVIDENCE SECTION */
+    .evidence-section {
+      border: 1px solid var(--gray-light); margin: 40px 0;
+    }
+    .evidence-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 20px; border-bottom: 1px solid var(--gray-light);
+      background: rgba(14,14,14,0.03);
+    }
+    .evidence-header h3 {
+      font-family: var(--mono); font-size: 0.68rem;
+      letter-spacing: 0.14em; text-transform: uppercase;
+    }
+    .evidence-list { padding: 16px 20px; display: flex; flex-direction: column; gap: 10px; }
+    .evidence-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 14px; background: var(--gray-faint);
+      font-family: var(--mono); font-size: 0.72rem;
+    }
+    .evidence-item .ei-icon { font-size: 1.1rem; }
+    .evidence-item .ei-name { flex: 1; }
+    .evidence-item .ei-type { color: var(--gray); font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.08em; }
+    .evidence-item .ei-auth {
+      font-size: 0.6rem; letter-spacing: 0.08em; text-transform: uppercase;
+      padding: 2px 7px; border: 1px solid currentColor;
+    }
+    .ei-auth-yes { color: #3d9970; }
+    .ei-auth-no  { color: var(--gold); }
+
+    /* VOTING PANEL */
+    .vote-panel {
+      background: var(--paper-dark); border: 1px solid var(--gray-light);
+      padding: 24px; margin: 36px 0; display: flex;
+      align-items: center; gap: 24px; flex-wrap: wrap;
+    }
+    .vote-panel-label {
+      font-family: var(--mono); font-size: 0.65rem;
+      letter-spacing: 0.14em; text-transform: uppercase; color: var(--gray); flex: 1;
+    }
+    .vote-panel-label strong { display: block; font-family: var(--serif); font-size: 1rem; color: var(--ink); font-weight: 700; text-transform: none; letter-spacing: 0; margin-top: 4px; }
+
+    /* COMMENTS */
+    .comments-section { margin-top: 56px; }
+    .comments-section h2 {
+      font-family: var(--serif); font-size: 1.5rem; font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .comment-form { margin: 24px 0 36px; }
+    .comment-input {
+      width: 100%; background: none; border: 1.5px solid var(--gray-light);
+      padding: 14px 16px; font-family: var(--body); font-size: 1rem; color: var(--ink);
+      outline: none; resize: vertical; min-height: 90px; transition: border-color var(--transition);
+      line-height: 1.6;
+    }
+    .comment-input:focus { border-color: var(--red); }
+    .comment-input::placeholder { color: var(--gray-light); }
+    .comment-actions { display: flex; justify-content: flex-end; margin-top: 10px; }
+    .comment-item {
+      padding: 20px 0; border-bottom: 1px solid var(--gray-faint);
+      animation: fadeUp 0.25s ease;
+    }
+    .comment-header { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+    .comment-avatar {
+      width: 32px; height: 32px; border-radius: 50%; background: var(--ink);
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--serif); font-weight: 700; font-size: 0.75rem; color: var(--paper);
+      flex-shrink: 0;
+    }
+    .comment-author { font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.08em; font-weight: 500; }
+    .comment-date { font-family: var(--mono); font-size: 0.6rem; color: var(--gray); }
+    .comment-text { font-size: 1rem; line-height: 1.6; color: var(--ink); }
+    .no-comments { font-family: var(--mono); font-size: 0.75rem; color: var(--gray); letter-spacing: 0.1em; text-transform: uppercase; padding: 32px 0; }
+
+    /* SIDEBAR */
+    .article-sidebar {}
+    .sidebar-sticky { position: sticky; top: 96px; }
+    .trust-widget {
+      border: 1px solid var(--gray-light); padding: 24px; margin-bottom: 24px;
+    }
+    .trust-widget h3 {
+      font-family: var(--mono); font-size: 0.65rem;
+      letter-spacing: 0.16em; text-transform: uppercase; color: var(--gray);
+      margin-bottom: 16px; padding-bottom: 10px; border-bottom: 2px solid var(--ink);
+    }
+    .trust-score-big {
+      font-family: var(--serif); font-size: 3rem; font-weight: 900;
+      line-height: 1; margin-bottom: 4px;
+    }
+    .trust-score-label { font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gray); margin-bottom: 16px; }
+    .verify-btns { display: flex; gap: 8px; flex-direction: column; }
+    .related-item {
+      padding: 14px 0; border-bottom: 1px solid var(--gray-faint); cursor: pointer;
+    }
+    .related-item:last-child { border-bottom: none; }
+    .related-item:hover .related-title { color: var(--red); }
+    .related-title { font-family: var(--serif); font-size: 0.95rem; font-weight: 700; line-height: 1.25; margin-bottom: 4px; transition: color var(--transition); }
+    .related-meta { font-family: var(--mono); font-size: 0.6rem; color: var(--gray); letter-spacing: 0.08em; text-transform: uppercase; }
+
+    .breadcrumb {
+      font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--gray); padding: 20px 40px 0;
+      max-width: var(--max-w); margin: 0 auto;
+    }
+    .breadcrumb a { color: var(--gray); transition: color var(--transition); }
+    .breadcrumb a:hover { color: var(--red); }
+    .breadcrumb span { padding: 0 8px; }
+
+    @media (max-width: 900px) {
+      .article-layout { grid-template-columns: 1fr; gap: 40px; padding: 32px 24px 60px; }
+      .sidebar-sticky { position: static; }
+      .breadcrumb { padding: 16px 24px 0; }
+    }
+  </style>
+</head>
+<body>
+<div id="header-mount"></div>
+<div id="auth-modal-mount"></div>
+<div class="breadcrumb"><a href="index.html">Home</a><span>/</span><span id="breadcrumbCat">Article</span></div>
+<div class="article-layout">
+  <main id="articleMain"></main>
+  <aside class="article-sidebar"><div class="sidebar-sticky" id="articleSidebar"></div></aside>
+</div>
+<div id="footer-mount"></div>
+
+<script src="app.js"></script>
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const articleId = params.get('id');
+
+  function init() {
+    document.getElementById('header-mount').innerHTML = renderHeader('');
+    document.getElementById('auth-modal-mount').innerHTML = renderAuthModal();
+    document.getElementById('footer-mount').innerHTML = renderFooter();
+    initMobileNav();
+    if (!articleId) { window.location.href = 'index.html'; return; }
+    const article = Articles.get(articleId);
+    if (!article) { window.location.href = 'index.html'; return; }
+    // increment views
+    Articles.update(articleId, { views: (article.views || 0) + 1 });
+    document.title = article.title + ' — Veritas';
+    document.getElementById('breadcrumbCat').textContent = article.category;
+    renderArticle(article);
+    renderSidebar(article);
+  }
+
+  function renderArticle(a) {
+    const userVote = Voting.getUserVote(a.id);
+    const evidenceItems = generateEvidenceItems(a);
+    const comments = Comments.get(a.id);
+
+    document.getElementById('articleMain').innerHTML = `
+      <div class="article-kicker">
+        <span style="color:var(--red);">${a.category}</span>
+        <span>${formatDate(a.date)}</span>
+        ${trustBadge(a.status)}
+      </div>
+      <h1 class="article-headline">${a.title}</h1>
+      <p class="article-dek">${a.excerpt}</p>
+      <div class="article-byline">
+        <div class="byline-avatar">${getAuthorAvatar(a.author)}</div>
+        <div class="byline-info">
+          <div class="byline-name">${a.author}</div>
+          <div class="byline-meta">Published ${formatDate(a.date)} · ${formatNum(a.views || 0)} reads</div>
+        </div>
+        <div class="byline-right">
+          ${trustBadge(a.status)}
+          ${a.evidenceCount ? `<span style="font-family:var(--mono);font-size:0.62rem;color:var(--gray);">📎 ${a.evidenceCount} evidence files</span>` : ''}
+        </div>
+      </div>
+
+      <div class="article-body" id="articleBody">
+        ${a.content.split('\n\n').map(p => p.trim() ? `<p>${p}</p>` : '').join('')}
+      </div>
+
+      ${evidenceItems}
+
+      <div class="vote-panel">
+        <div class="vote-panel-label">
+          Was this reporting credible and important?
+          <strong>Cast your verification vote</strong>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button class="vote-btn ${userVote === 'up' ? 'voted-up' : ''}" id="upBtn" onclick="handleVote('up')">
+            ▲ Credible <span id="upCount">${formatNum(a.upvotes)}</span>
+          </button>
+          <button class="vote-btn ${userVote === 'down' ? 'voted-down' : ''}" id="downBtn" onclick="handleVote('down')">
+            ▼ Disputed <span id="downCount">${formatNum(a.downvotes)}</span>
+          </button>
+        </div>
+      </div>
+
+      ${scoreBar(a.verifiedBy, a.disputedBy)}
+
+      <div class="tags-row" style="margin:28px 0;display:flex;gap:8px;flex-wrap:wrap;">
+        ${(a.tags||[]).map(t => `<span style="font-family:var(--mono);font-size:0.62rem;letter-spacing:0.1em;text-transform:uppercase;padding:4px 10px;border:1px solid var(--gray-light);color:var(--gray);">${t}</span>`).join('')}
+      </div>
+
+      <div class="comments-section">
+        <h2>Discussion <span style="font-family:var(--mono);font-size:0.9rem;color:var(--gray);font-weight:400;">(${comments.length})</span></h2>
+        <div class="comment-form">
+          <textarea class="comment-input" id="commentInput" placeholder="Add to the record — be factual, be specific…"></textarea>
+          <div class="comment-actions">
+            <button class="btn btn-solid btn-sm" onclick="submitComment()">Post Comment</button>
+          </div>
+        </div>
+        <div id="commentsList">
+          ${renderComments(comments)}
+        </div>
+      </div>
+    `;
+  }
+
+  function generateEvidenceItems(a) {
+    if (!a.evidenceCount) return '';
+    const types = a.evidenceTypes || [];
+    const icons = { document: '📄', photo: '🖼', video: '🎥' };
+    const names = {
+      document: ['Internal memorandum', 'Email correspondence chain', 'Financial records', 'Subcontracting agreement', 'Regulatory filing', 'Internal briefing document'],
+      photo: ['Photographic evidence', 'Screenshot record', 'Scanned document image'],
+      video: ['Video recording']
+    };
+    const items = Array.from({ length: a.evidenceCount }, (_, i) => {
+      const type = types[i % types.length] || 'document';
+      const nameArr = names[type] || names.document;
+      const name = nameArr[i % nameArr.length];
+      const authenticated = i < Math.floor(a.evidenceCount * 0.75);
+      return `
+        <div class="evidence-item">
+          <span class="ei-icon">${icons[type] || '📄'}</span>
+          <span class="ei-name">${name} (${String.fromCharCode(65 + (i % 26))}-${String(i+1).padStart(3,'0')})</span>
+          <span class="ei-type">${type}</span>
+          <span class="ei-auth ${authenticated ? 'ei-auth-yes' : 'ei-auth-no'}">${authenticated ? 'Authenticated' : 'Pending'}</span>
+        </div>
+      `;
+    }).join('');
+    return `
+      <div class="evidence-section">
+        <div class="evidence-header">
+          <h3>📎 Evidence Files (${a.evidenceCount})</h3>
+          <span style="font-family:var(--mono);font-size:0.62rem;color:var(--gray);">${Math.floor(a.evidenceCount * 0.75)} authenticated · ${Math.ceil(a.evidenceCount * 0.25)} pending review</span>
+        </div>
+        <div class="evidence-list">${items}</div>
+      </div>
+    `;
+  }
+
+  function renderComments(comments) {
+    if (!comments.length) return '<div class="no-comments">Be the first to comment.</div>';
+    return comments.map(c => `
+      <div class="comment-item">
+        <div class="comment-header">
+          <div class="comment-avatar">${c.avatar || c.author.slice(0,2).toUpperCase()}</div>
+          <span class="comment-author">${c.author}</span>
+          <span class="comment-date">${c.date}</span>
+        </div>
+        <p class="comment-text">${escapeHtml(c.text)}</p>
+      </div>
+    `).join('');
+  }
+
+  function escapeHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function getAuthorAvatar(name) {
+    if (!name || name.toLowerCase().includes('anonymous')) return 'AN';
+    return name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  }
+
+  function renderSidebar(a) {
+    const total = (a.verifiedBy || 0) + (a.disputedBy || 0);
+    const pct = total > 0 ? Math.round(((a.verifiedBy || 0) / total) * 100) : 0;
+    const userVerify = Store.get('verifies') ? (Store.get('verifies')[((Auth.current()||{}).id||'') + '_verify_' + a.id]) : null;
+    const related = Articles.byCategory(a.category).filter(r => r.id !== a.id).slice(0,4);
+
+    document.getElementById('articleSidebar').innerHTML = `
+      <div class="trust-widget">
+        <h3>Community Trust Score</h3>
+        <div class="trust-score-big" style="color:${pct >= 70 ? '#3d9970' : pct >= 40 ? 'var(--gold)' : 'var(--red)'};">${pct}%</div>
+        <div class="trust-score-label">${a.verifiedBy || 0} verified · ${a.disputedBy || 0} disputed</div>
+        <div class="trust-bar-wrap" style="margin-bottom:20px;"><div class="trust-bar-fill" style="width:${pct}%;background:${pct >= 70 ? '#3d9970' : pct >= 40 ? 'var(--gold)' : 'var(--red)'}"></div></div>
+        <div class="verify-btns">
+          <button class="btn btn-sm ${userVerify === 'verified' ? 'btn-solid' : ''}" style="width:100%;justify-content:center;" onclick="handleVerify('verified')">
+            ✓ Mark as Verified
+          </button>
+          <button class="btn btn-sm ${userVerify === 'disputed' ? 'btn-red' : ''}" style="width:100%;justify-content:center;" onclick="handleVerify('disputed')">
+            ✗ Dispute This Story
+          </button>
+        </div>
+      </div>
+
+      ${related.length ? `
+        <div class="trust-widget">
+          <h3>Related Stories</h3>
+          ${related.map(r => `
+            <div class="related-item" onclick="window.location='article.html?id=${r.id}'">
+              <div class="related-title">${r.title}</div>
+              <div class="related-meta">${formatDate(r.date)} · ${trustBadge(r.status)}</div>
+            </div>
+          `).join('')}
+        </div>
+      ` : ''}
+
+      <div class="trust-widget" style="background:var(--ink);color:var(--paper);border-color:var(--ink);">
+        <h3 style="color:rgba(255,255,255,0.5);">Know Something?</h3>
+        <p style="font-size:0.9rem;opacity:0.75;line-height:1.55;margin-bottom:16px;">If you have additional evidence related to this story, submit it securely.</p>
+        <a href="submit.html" class="btn btn-sm" style="border-color:rgba(255,255,255,0.3);color:var(--paper);width:100%;justify-content:center;">Add Evidence →</a>
+      </div>
+    `;
+  }
+
+  function handleVote(direction) {
+    if (!Auth.isLoggedIn()) { openAuthModal('login'); return; }
+    Voting.vote(articleId, direction);
+    const a = Articles.get(articleId);
+    const userVote = Voting.getUserVote(articleId);
+    document.getElementById('upCount').textContent = formatNum(a.upvotes);
+    document.getElementById('downCount').textContent = formatNum(a.downvotes);
+    document.getElementById('upBtn').className = 'vote-btn ' + (userVote === 'up' ? 'voted-up' : '');
+    document.getElementById('downBtn').className = 'vote-btn ' + (userVote === 'down' ? 'voted-down' : '');
+    showToast(userVote ? 'Vote recorded.' : 'Vote removed.', 'success');
+  }
+
+  function handleVerify(direction) {
+    if (!Auth.isLoggedIn()) { openAuthModal('login'); return; }
+    Voting.verify(articleId, direction);
+    const a = Articles.get(articleId);
+    renderSidebar(a);
+    showToast(direction === 'verified' ? 'Marked as verified.' : 'Story disputed.', direction === 'verified' ? 'success' : 'warning');
+  }
+
+  function submitComment() {
+    const input = document.getElementById('commentInput');
+    if (!Auth.isLoggedIn()) { openAuthModal('login'); return; }
+    const comment = Comments.add(articleId, input.value);
+    if (!comment) return;
+    input.value = '';
+    const comments = Comments.get(articleId);
+    document.getElementById('commentsList').innerHTML = renderComments(comments);
+    // update article headline comment count
+    const a = Articles.get(articleId);
+    showToast('Comment posted.', 'success');
+  }
+
+  init();
+</script>
+</body>
+</html>
